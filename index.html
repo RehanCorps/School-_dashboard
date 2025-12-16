@@ -1,491 +1,611 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, DollarSign, TrendingUp, UserPlus, Calendar, Clock, Bell } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const Dashboard = () => {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [students, setStudents] = useState([
-    { id: 1, name: 'John Doe', class: '10-A', feeStatus: 'Paid', amount: 5000 },
-    { id: 2, name: 'Jane Smith', class: '10-B', feeStatus: 'Pending', amount: 5000 },
-    { id: 3, name: 'Mike Johnson', class: '9-A', feeStatus: 'Paid', amount: 4500 },
-  ]);
-  const [teachers, setTeachers] = useState([
-    { id: 1, name: 'Prof. Anderson', subject: 'Mathematics', class: '10-A' },
-    { id: 2, name: 'Dr. Williams', subject: 'Science', class: '10-B' },
-  ]);
-  const [schoolInfo, setSchoolInfo] = useState({
-    timings: '8:00 AM - 2:00 PM',
-    events: ['Sports Day - Dec 20', 'Annual Function - Jan 15'],
-    schedules: ['Mid-term Exams - Dec 25', 'Winter Break - Jan 1-10'],
-  });
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+        }
 
-  // Form states
-  const [studentForm, setStudentForm] = useState({ name: '', class: '', feeStatus: 'Pending', amount: '' });
-  const [teacherForm, setTeacherForm] = useState({ name: '', subject: '', class: '' });
-  const [eventInput, setEventInput] = useState('');
+        .sidebar {
+            width: 260px;
+            background: #1f2937;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding: 30px 20px;
+        }
 
-  // Mock performance data
-  const performanceData = [
-    { class: '8-A', avgScore: 75, students: 30 },
-    { class: '9-A', avgScore: 82, students: 28 },
-    { class: '10-A', avgScore: 78, students: 32 },
-    { class: '10-B', avgScore: 85, students: 30 },
-  ];
+        .sidebar h1 {
+            font-size: 24px;
+            margin-bottom: 40px;
+            color: #fff;
+        }
 
-  const feeStatusData = [
-    { name: 'Paid', value: students.filter(s => s.feeStatus === 'Paid').length },
-    { name: 'Pending', value: students.filter(s => s.feeStatus === 'Pending').length },
-    { name: 'Overdue', value: students.filter(s => s.feeStatus === 'Overdue').length },
-  ];
+        .nav-btn {
+            width: 100%;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
 
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+        .nav-btn:hover {
+            background: #374151;
+        }
 
-  // Student Management Functions
-  const addStudent = () => {
-    if (studentForm.name && studentForm.class && studentForm.amount) {
-      setStudents([...students, { ...studentForm, id: Date.now() }]);
-      setStudentForm({ name: '', class: '', feeStatus: 'Pending', amount: '' });
-    }
-  };
+        .nav-btn.active {
+            background: #2563eb;
+        }
 
-  const deleteStudent = (id) => {
-    setStudents(students.filter(s => s.id !== id));
-  };
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+            width: calc(100% - 260px);
+        }
 
-  const updateFeeStatus = (id, newStatus) => {
-    setStudents(students.map(s => s.id === id ? { ...s, feeStatus: newStatus } : s));
-  };
+        .page {
+            display: none;
+        }
 
-  // Teacher Management Functions
-  const addTeacher = () => {
-    if (teacherForm.name && teacherForm.subject && teacherForm.class) {
-      setTeachers([...teachers, { ...teacherForm, id: Date.now() }]);
-      setTeacherForm({ name: '', subject: '', class: '' });
-    }
-  };
+        .page.active {
+            display: block;
+        }
 
-  const deleteTeacher = (id) => {
-    setTeachers(teachers.filter(t => t.id !== id));
-  };
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
 
-  // School Info Functions
-  const addEvent = () => {
-    if (eventInput) {
-      setSchoolInfo({ ...schoolInfo, events: [...schoolInfo.events, eventInput] });
-      setEventInput('');
-    }
-  };
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
 
-  // Navigation Component
-  const Sidebar = () => (
-    <div className="w-64 bg-gray-900 text-white h-screen p-6 fixed left-0 top-0">
-      <h1 className="text-2xl font-bold mb-8">School Admin</h1>
-      <nav className="space-y-2">
-        {[
-          { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-          { id: 'students', label: 'Manage Students', icon: Users },
-          { id: 'fees', label: 'Fee Status', icon: DollarSign },
-          { id: 'performance', label: 'Class Performance', icon: BarChart },
-          { id: 'teachers', label: 'Manage Teachers', icon: UserPlus },
-          { id: 'school', label: 'School Info', icon: Calendar },
-        ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => setCurrentPage(item.id)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
-              currentPage === item.id ? 'bg-blue-600' : 'hover:bg-gray-800'
-            }`}
-          >
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #1f2937;
+        }
+
+        h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-excellent {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-good {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-needs-improvement {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .event-list {
+            list-style: none;
+        }
+
+        .event-item {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>School Admin</h1>
+        <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+        <button class="nav-btn" onclick="showPage('students')">👥 Manage Students</button>
+        <button class="nav-btn" onclick="showPage('fees')">💰 Fee Status</button>
+        <button class="nav-btn" onclick="showPage('performance')">📈 Class Performance</button>
+        <button class="nav-btn" onclick="showPage('teachers')">👨‍🏫 Manage Teachers</button>
+        <button class="nav-btn" onclick="showPage('school')">📅 School Info</button>
     </div>
-  );
 
-  // Dashboard Overview
-  const DashboardPage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Dashboard Overview</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Students</p>
-              <p className="text-3xl font-bold">{students.length}</p>
+    <div class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <h2>Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Students</h3>
+                    <div class="number" id="totalStudents">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Teachers</h3>
+                    <div class="number" id="totalTeachers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Fee Collection</h3>
+                    <div class="number" id="totalFees">$0</div>
+                </div>
             </div>
-            <Users className="text-blue-500" size={40} />
-          </div>
+            <div class="chart-grid">
+                <div class="card">
+                    <h3>Fee Status Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="feeChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Recent Activities</h3>
+                    <div class="event-list">
+                        <div class="event-item">📝 New student enrolled</div>
+                        <div class="event-item">💵 Fee payment received</div>
+                        <div class="event-item">📅 Event scheduled</div>
+                        <div class="event-item">👨‍🏫 New teacher added</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Teachers</p>
-              <p className="text-3xl font-bold">{teachers.length}</p>
+
+        <!-- Students Page -->
+        <div id="students" class="page">
+            <h2>Manage Students</h2>
+            <div class="card">
+                <h3>Add New Student</h3>
+                <div class="form-grid">
+                    <input type="text" id="studentName" placeholder="Student Name">
+                    <input type="text" id="studentClass" placeholder="Class (e.g., 10-A)">
+                    <input type="number" id="studentAmount" placeholder="Fee Amount">
+                    <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+                </div>
             </div>
-            <UserPlus className="text-green-500" size={40} />
-          </div>
+            <div class="card">
+                <h3>Student List</h3>
+                <table id="studentTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Class</th>
+                            <th>Fee Status</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Fee Collection</p>
-              <p className="text-3xl font-bold">${students.reduce((acc, s) => s.feeStatus === 'Paid' ? acc + parseInt(s.amount) : acc, 0)}</p>
+
+        <!-- Fees Page -->
+        <div id="fees" class="page">
+            <h2>Fee Status Management</h2>
+            <div class="card">
+                <table id="feeTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>Amount</th>
+                            <th>Current Status</th>
+                            <th>Update Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <DollarSign className="text-yellow-500" size={40} />
-          </div>
         </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold mb-4">Fee Status Distribution</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie data={feeStatusData} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label>
-                {feeStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+
+        <!-- Performance Page -->
+        <div id="performance" class="page">
+            <h2>Class Performance</h2>
+            <div class="chart-grid">
+                <div class="card">
+                    <h3>Average Scores by Class</h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Student Count by Class</h3>
+                    <div class="chart-container">
+                        <canvas id="studentCountChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Class Details</h3>
+                <table id="performanceTable">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Average Score</th>
+                            <th>Total Students</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold mb-4">Recent Activities</h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-              <Bell className="text-blue-500" size={20} />
-              <span className="text-sm">New student enrolled</span>
+
+        <!-- Teachers Page -->
+        <div id="teachers" class="page">
+            <h2>Manage Teachers</h2>
+            <div class="card">
+                <h3>Add New Teacher</h3>
+                <div class="form-grid">
+                    <input type="text" id="teacherName" placeholder="Teacher Name">
+                    <input type="text" id="teacherSubject" placeholder="Subject">
+                    <input type="text" id="teacherClass" placeholder="Class">
+                    <button class="btn btn-primary" onclick="addTeacher()">Add Teacher</button>
+                </div>
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-              <DollarSign className="text-green-500" size={20} />
-              <span className="text-sm">Fee payment received</span>
+            <div class="card">
+                <h3>Teacher List</h3>
+                <table id="teacherTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-              <Calendar className="text-purple-500" size={20} />
-              <span className="text-sm">Event scheduled</span>
-            </div>
-          </div>
         </div>
-      </div>
+
+        <!-- School Info Page -->
+        <div id="school" class="page">
+            <h2>School Information</h2>
+            <div class="chart-grid">
+                <div class="card">
+                    <h3>⏰ School Timings</h3>
+                    <input type="text" id="schoolTimings" value="8:00 AM - 2:00 PM">
+                    <button class="btn btn-primary" style="margin-top: 15px;" onclick="updateTimings()">Update Timings</button>
+                </div>
+                <div class="card">
+                    <h3>📅 Add Event</h3>
+                    <input type="text" id="eventInput" placeholder="Enter event">
+                    <button class="btn btn-success" style="margin-top: 15px;" onclick="addEvent()">Add Event</button>
+                </div>
+            </div>
+            <div class="chart-grid">
+                <div class="card">
+                    <h3>Upcoming Events</h3>
+                    <ul class="event-list" id="eventList"></ul>
+                </div>
+                <div class="card">
+                    <h3>Schedules</h3>
+                    <ul class="event-list" id="scheduleList"></ul>
+                </div>
+            </div>
+        </div>
     </div>
-  );
 
-  // Student Management Page
-  const StudentsPage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Manage Students</h2>
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h3 className="text-xl font-bold mb-4">Add New Student</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="Student Name"
-            value={studentForm.name}
-            onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <input
-            type="text"
-            placeholder="Class"
-            value={studentForm.class}
-            onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <input
-            type="number"
-            placeholder="Fee Amount"
-            value={studentForm.amount}
-            onChange={(e) => setStudentForm({ ...studentForm, amount: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <button onClick={addStudent} className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-            Add Student
-          </button>
-        </div>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold mb-4">Student List</h3>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Name</th>
-              <th className="text-left p-3">Class</th>
-              <th className="text-left p-3">Fee Status</th>
-              <th className="text-left p-3">Amount</th>
-              <th className="text-left p-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map(student => (
-              <tr key={student.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{student.name}</td>
-                <td className="p-3">{student.class}</td>
-                <td className="p-3">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    student.feeStatus === 'Paid' ? 'bg-green-100 text-green-800' :
-                    student.feeStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {student.feeStatus}
-                  </span>
-                </td>
-                <td className="p-3">${student.amount}</td>
-                <td className="p-3">
-                  <button
-                    onClick={() => deleteStudent(student.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    <script>
+        // Data storage
+        let students = [
+            { id: 1, name: 'John Doe', class: '10-A', feeStatus: 'Paid', amount: 5000 },
+            { id: 2, name: 'Jane Smith', class: '10-B', feeStatus: 'Pending', amount: 5000 },
+            { id: 3, name: 'Mike Johnson', class: '9-A', feeStatus: 'Paid', amount: 4500 },
+        ];
 
-  // Fee Status Page
-  const FeesPage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Fee Status Management</h2>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Student Name</th>
-              <th className="text-left p-3">Class</th>
-              <th className="text-left p-3">Amount</th>
-              <th className="text-left p-3">Current Status</th>
-              <th className="text-left p-3">Update Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map(student => (
-              <tr key={student.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{student.name}</td>
-                <td className="p-3">{student.class}</td>
-                <td className="p-3">${student.amount}</td>
-                <td className="p-3">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    student.feeStatus === 'Paid' ? 'bg-green-100 text-green-800' :
-                    student.feeStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {student.feeStatus}
-                  </span>
-                </td>
-                <td className="p-3">
-                  <select
-                    value={student.feeStatus}
-                    onChange={(e) => updateFeeStatus(student.id, e.target.value)}
-                    className="border rounded px-3 py-2"
-                  >
-                    <option value="Paid">Paid</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Overdue">Overdue</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        let teachers = [
+            { id: 1, name: 'Prof. Anderson', subject: 'Mathematics', class: '10-A' },
+            { id: 2, name: 'Dr. Williams', subject: 'Science', class: '10-B' },
+        ];
 
-  // Performance Page
-  const PerformancePage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Class Performance</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold mb-4">Average Scores by Class</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="class" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="avgScore" fill="#3b82f6" name="Average Score" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold mb-4">Student Count by Class</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="class" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="students" stroke="#10b981" strokeWidth={2} name="Students" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold mb-4">Class Details</h3>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Class</th>
-              <th className="text-left p-3">Average Score</th>
-              <th className="text-left p-3">Total Students</th>
-              <th className="text-left p-3">Performance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {performanceData.map(cls => (
-              <tr key={cls.class} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-semibold">{cls.class}</td>
-                <td className="p-3">{cls.avgScore}%</td>
-                <td className="p-3">{cls.students}</td>
-                <td className="p-3">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    cls.avgScore >= 80 ? 'bg-green-100 text-green-800' :
-                    cls.avgScore >= 70 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {cls.avgScore >= 80 ? 'Excellent' : cls.avgScore >= 70 ? 'Good' : 'Needs Improvement'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        let performanceData = [
+            { class: '8-A', avgScore: 75, students: 30 },
+            { class: '9-A', avgScore: 82, students: 28 },
+            { class: '10-A', avgScore: 78, students: 32 },
+            { class: '10-B', avgScore: 85, students: 30 },
+        ];
 
-  // Teachers Page
-  const TeachersPage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Manage Teachers</h2>
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h3 className="text-xl font-bold mb-4">Add New Teacher</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="Teacher Name"
-            value={teacherForm.name}
-            onChange={(e) => setTeacherForm({ ...teacherForm, name: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <input
-            type="text"
-            placeholder="Subject"
-            value={teacherForm.subject}
-            onChange={(e) => setTeacherForm({ ...teacherForm, subject: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <input
-            type="text"
-            placeholder="Class"
-            value={teacherForm.class}
-            onChange={(e) => setTeacherForm({ ...teacherForm, class: e.target.value })}
-            className="border rounded px-4 py-2"
-          />
-          <button onClick={addTeacher} className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-            Add Teacher
-          </button>
-        </div>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold mb-4">Teacher List</h3>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Name</th>
-              <th className="text-left p-3">Subject</th>
-              <th className="text-left p-3">Class</th>
-              <th className="text-left p-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teachers.map(teacher => (
-              <tr key={teacher.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{teacher.name}</td>
-                <td className="p-3">{teacher.subject}</td>
-                <td className="p-3">{teacher.class}</td>
-                <td className="p-3">
-                  <button
-                    onClick={() => deleteTeacher(teacher.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 mr-2"
-                  >
-                    Delete
-                  </button>
-                  <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        let events = ['Sports Day - Dec 20', 'Annual Function - Jan 15'];
+        let schedules = ['Mid-term Exams - Dec 25', 'Winter Break - Jan 1-10'];
 
-  // School Info Page
-  const SchoolInfoPage = () => (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">School Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center space-x-3 mb-4">
-            <Clock className="text-blue-500" size={24} />
-            <h3 className="text-xl font-bold">School Timings</h3>
-          </div>
-          <input
-            type="text"
-            value={schoolInfo.timings}
-            onChange={(e) => setSchoolInfo({ ...schoolInfo, timings: e.target.value })}
-            className="border rounded px-4 py-2 w-full mb-4"
-          />
-          <button className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-            Update Timings
-          </button>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center space-x-3 mb-4">
-            <Calendar className="text-green-500" size={24} />
-            <h3 className="text-xl font-bold">Add Event</h3>
-          </div>
-          <div className="flex space-x-2 mb-4">
-            <input
-              type="text"
-              placeholder="Enter event"
-              value={eventInput}
-              onChange={(e) => setEventInput(e.target.value)}
-              className="border rounded px-4 py-2 flex-1"
-            />
-            <button onClick={addEvent} className="bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700">
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold mb-4">Upcoming Events</h3>
-          <ul className="space-y-2">
-            {schoolInfo.events.map((event, idx) => (
-              <li key={idx} className="p-3 bg-gray-50 rounded flex justify-between items-center">
-                <span>{event}</span>
-                <button
-                  onClick={() => setSchoolInfo({
-                    ...schoolInfo,
-                    events: schoolInfo.events.filter((_, i) => i !== idx)
-                  })}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Remove
-                </button>
-           
+        // Charts
+        let feeChart, performanceChart, studentCountChart;
+
+        // Page navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (pageId === 'dashboard') updateDashboard();
+            if (pageId === 'performance') updatePerformanceCharts();
+        }
+
+        // Student functions
+        function addStudent() {
+            const name = document.getElementById('studentName').value;
+            const cls = document.getElementById('studentClass').value;
+            const amount = document.getElementById('studentAmount').value;
+            
+            if (name && cls && amount) {
+                students.push({
+                    id: Date.now(),
+                    name: name,
+                    class: cls,
+                    feeStatus: 'Pending',
+                    amount: parseInt(amount)
+                });
+                
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentClass').value = '';
+                document.getElementById('studentAmount').value = '';
+                
+                renderStudentTable();
+                renderFeeTable();
+                updateDashboard();
+            }
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            renderStudentTable();
+            renderFeeTable();
+            updateDashboard();
+        }
+
+        function updateFeeStatus(id, status) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student.feeStatus = status;
+                renderStudentTable();
+                renderFeeTable();
+                updateDashboard();
+            }
+        }
+
+        function renderStudentTable() {
+            const tbody = document.querySelector('#studentTable tbody');
+            tbody.innerHTML = students.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.class}</td>
+                    <td><span class="badge badge-${s.feeStatus.toLowerCase()}">${s.feeStatus}</span></td>
+                    <td>$${s.amount}</td>
+                    <td><button class="btn btn-danger btn-small" onclick="deleteStudent(${s.id})">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFeeTable() {
+            const tbody = document.querySelector('#feeTable tbody');
+            tbody.innerHTML = students.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.class}</td>
+                    <td>$${s.amount}</td>
+                    <td><span class="badge badge-${s.feeStatus.toLowerCase()}">${s.feeStatus}</span></td>
+                    <td>
+                        <select onchange="updateFeeStatus(${s.id}, this.value)" value="${s.feeStatus}">
+                            <option value="Paid" ${s.feeStatus === 'Paid' ? 'selected' : ''}>Paid</option>
+                            <option value="Pending" ${s.feeStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="Overdue" ${s.feeStatus === 'Overdue' ? 'selected' : ''}>Overdue</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Teacher functions
+        function addTeacher() {
+            const name = document.getElementById('teacherName').value;
+            const subject = document.getElementById('teacherSubject').value;
+            const cls = document.getElementById('teacherClass').value;
+            
+            if (name && subject && cls) {
+                teachers.push({
+                    id: Date.now(),
+                    name: name,
+                    subject: subject,
+                    class: cls
+                });
+                
+                document.getElementById('teacherName').value = '';
+                document.getElementById('teacherSubject').value = '';
+                document.getElementById('teacherClass').value = '';
+                
+                renderTeacherTable();
+                updateDashboard();
+            }
+        }
+
+        function deleteTeacher(id) {
+            teachers = teachers.filter(t => t.id !== id);
+            renderTeacherTable();
+            updateDashboard();
+        }
+
+        function renderTeacherTable() {
+            const tbody = document.querySelector('#teacherTable tbody');
+            tbody.innerHTML = teachers.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.subject}</td>
+                    <td>${t.class}</td>
+                    <td>
+                        <button class="btn btn-danger btn-small" onclick="deleteTeacher(${t.id})">Delete</button>
+                        <button class="btn btn-primary btn-small">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Performance functions
+        function renderPerformanceTable() {
+            const tbody = document.querySelector('#performanceTable tbody');
+            tbody.innerHTML = performanceData.map(p => {
+                let performance = p.avgScore >= 80 ? 'Excellent' : p.avgScore >= 70 ? 'Good' : 'Needs Improvement';
+                let badgeClass = p.avgScore >= 80 ? 'badge-excellent' : p.avgScore >= 70 ? 'badge-good' : 'badge-needs-improvement';
+                return `
+                    <tr>
+                        <td><strong>${p.class}</strong></td>
+                        <td>${p.avgScore}%</td>
+                        <td>${p.students}</td>
+            
