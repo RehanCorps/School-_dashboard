@@ -1,1 +1,491 @@
-hello.html
+import React, { useState } from 'react';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, DollarSign, TrendingUp, UserPlus, Calendar, Clock, Bell } from 'lucide-react';
+
+const Dashboard = () => {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [students, setStudents] = useState([
+    { id: 1, name: 'John Doe', class: '10-A', feeStatus: 'Paid', amount: 5000 },
+    { id: 2, name: 'Jane Smith', class: '10-B', feeStatus: 'Pending', amount: 5000 },
+    { id: 3, name: 'Mike Johnson', class: '9-A', feeStatus: 'Paid', amount: 4500 },
+  ]);
+  const [teachers, setTeachers] = useState([
+    { id: 1, name: 'Prof. Anderson', subject: 'Mathematics', class: '10-A' },
+    { id: 2, name: 'Dr. Williams', subject: 'Science', class: '10-B' },
+  ]);
+  const [schoolInfo, setSchoolInfo] = useState({
+    timings: '8:00 AM - 2:00 PM',
+    events: ['Sports Day - Dec 20', 'Annual Function - Jan 15'],
+    schedules: ['Mid-term Exams - Dec 25', 'Winter Break - Jan 1-10'],
+  });
+
+  // Form states
+  const [studentForm, setStudentForm] = useState({ name: '', class: '', feeStatus: 'Pending', amount: '' });
+  const [teacherForm, setTeacherForm] = useState({ name: '', subject: '', class: '' });
+  const [eventInput, setEventInput] = useState('');
+
+  // Mock performance data
+  const performanceData = [
+    { class: '8-A', avgScore: 75, students: 30 },
+    { class: '9-A', avgScore: 82, students: 28 },
+    { class: '10-A', avgScore: 78, students: 32 },
+    { class: '10-B', avgScore: 85, students: 30 },
+  ];
+
+  const feeStatusData = [
+    { name: 'Paid', value: students.filter(s => s.feeStatus === 'Paid').length },
+    { name: 'Pending', value: students.filter(s => s.feeStatus === 'Pending').length },
+    { name: 'Overdue', value: students.filter(s => s.feeStatus === 'Overdue').length },
+  ];
+
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+
+  // Student Management Functions
+  const addStudent = () => {
+    if (studentForm.name && studentForm.class && studentForm.amount) {
+      setStudents([...students, { ...studentForm, id: Date.now() }]);
+      setStudentForm({ name: '', class: '', feeStatus: 'Pending', amount: '' });
+    }
+  };
+
+  const deleteStudent = (id) => {
+    setStudents(students.filter(s => s.id !== id));
+  };
+
+  const updateFeeStatus = (id, newStatus) => {
+    setStudents(students.map(s => s.id === id ? { ...s, feeStatus: newStatus } : s));
+  };
+
+  // Teacher Management Functions
+  const addTeacher = () => {
+    if (teacherForm.name && teacherForm.subject && teacherForm.class) {
+      setTeachers([...teachers, { ...teacherForm, id: Date.now() }]);
+      setTeacherForm({ name: '', subject: '', class: '' });
+    }
+  };
+
+  const deleteTeacher = (id) => {
+    setTeachers(teachers.filter(t => t.id !== id));
+  };
+
+  // School Info Functions
+  const addEvent = () => {
+    if (eventInput) {
+      setSchoolInfo({ ...schoolInfo, events: [...schoolInfo.events, eventInput] });
+      setEventInput('');
+    }
+  };
+
+  // Navigation Component
+  const Sidebar = () => (
+    <div className="w-64 bg-gray-900 text-white h-screen p-6 fixed left-0 top-0">
+      <h1 className="text-2xl font-bold mb-8">School Admin</h1>
+      <nav className="space-y-2">
+        {[
+          { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+          { id: 'students', label: 'Manage Students', icon: Users },
+          { id: 'fees', label: 'Fee Status', icon: DollarSign },
+          { id: 'performance', label: 'Class Performance', icon: BarChart },
+          { id: 'teachers', label: 'Manage Teachers', icon: UserPlus },
+          { id: 'school', label: 'School Info', icon: Calendar },
+        ].map(item => (
+          <button
+            key={item.id}
+            onClick={() => setCurrentPage(item.id)}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
+              currentPage === item.id ? 'bg-blue-600' : 'hover:bg-gray-800'
+            }`}
+          >
+            <item.icon size={20} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+
+  // Dashboard Overview
+  const DashboardPage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">Dashboard Overview</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Total Students</p>
+              <p className="text-3xl font-bold">{students.length}</p>
+            </div>
+            <Users className="text-blue-500" size={40} />
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Total Teachers</p>
+              <p className="text-3xl font-bold">{teachers.length}</p>
+            </div>
+            <UserPlus className="text-green-500" size={40} />
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Fee Collection</p>
+              <p className="text-3xl font-bold">${students.reduce((acc, s) => s.feeStatus === 'Paid' ? acc + parseInt(s.amount) : acc, 0)}</p>
+            </div>
+            <DollarSign className="text-yellow-500" size={40} />
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold mb-4">Fee Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={feeStatusData} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label>
+                {feeStatusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold mb-4">Recent Activities</h3>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
+              <Bell className="text-blue-500" size={20} />
+              <span className="text-sm">New student enrolled</span>
+            </div>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
+              <DollarSign className="text-green-500" size={20} />
+              <span className="text-sm">Fee payment received</span>
+            </div>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
+              <Calendar className="text-purple-500" size={20} />
+              <span className="text-sm">Event scheduled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Student Management Page
+  const StudentsPage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">Manage Students</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h3 className="text-xl font-bold mb-4">Add New Student</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input
+            type="text"
+            placeholder="Student Name"
+            value={studentForm.name}
+            onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <input
+            type="text"
+            placeholder="Class"
+            value={studentForm.class}
+            onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <input
+            type="number"
+            placeholder="Fee Amount"
+            value={studentForm.amount}
+            onChange={(e) => setStudentForm({ ...studentForm, amount: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <button onClick={addStudent} className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
+            Add Student
+          </button>
+        </div>
+      </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-4">Student List</h3>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-3">Name</th>
+              <th className="text-left p-3">Class</th>
+              <th className="text-left p-3">Fee Status</th>
+              <th className="text-left p-3">Amount</th>
+              <th className="text-left p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map(student => (
+              <tr key={student.id} className="border-b hover:bg-gray-50">
+                <td className="p-3">{student.name}</td>
+                <td className="p-3">{student.class}</td>
+                <td className="p-3">
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    student.feeStatus === 'Paid' ? 'bg-green-100 text-green-800' :
+                    student.feeStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {student.feeStatus}
+                  </span>
+                </td>
+                <td className="p-3">${student.amount}</td>
+                <td className="p-3">
+                  <button
+                    onClick={() => deleteStudent(student.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Fee Status Page
+  const FeesPage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">Fee Status Management</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-3">Student Name</th>
+              <th className="text-left p-3">Class</th>
+              <th className="text-left p-3">Amount</th>
+              <th className="text-left p-3">Current Status</th>
+              <th className="text-left p-3">Update Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map(student => (
+              <tr key={student.id} className="border-b hover:bg-gray-50">
+                <td className="p-3">{student.name}</td>
+                <td className="p-3">{student.class}</td>
+                <td className="p-3">${student.amount}</td>
+                <td className="p-3">
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    student.feeStatus === 'Paid' ? 'bg-green-100 text-green-800' :
+                    student.feeStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {student.feeStatus}
+                  </span>
+                </td>
+                <td className="p-3">
+                  <select
+                    value={student.feeStatus}
+                    onChange={(e) => updateFeeStatus(student.id, e.target.value)}
+                    className="border rounded px-3 py-2"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Performance Page
+  const PerformancePage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">Class Performance</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold mb-4">Average Scores by Class</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={performanceData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="class" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="avgScore" fill="#3b82f6" name="Average Score" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold mb-4">Student Count by Class</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={performanceData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="class" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="students" stroke="#10b981" strokeWidth={2} name="Students" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-4">Class Details</h3>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-3">Class</th>
+              <th className="text-left p-3">Average Score</th>
+              <th className="text-left p-3">Total Students</th>
+              <th className="text-left p-3">Performance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {performanceData.map(cls => (
+              <tr key={cls.class} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-semibold">{cls.class}</td>
+                <td className="p-3">{cls.avgScore}%</td>
+                <td className="p-3">{cls.students}</td>
+                <td className="p-3">
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    cls.avgScore >= 80 ? 'bg-green-100 text-green-800' :
+                    cls.avgScore >= 70 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {cls.avgScore >= 80 ? 'Excellent' : cls.avgScore >= 70 ? 'Good' : 'Needs Improvement'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Teachers Page
+  const TeachersPage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">Manage Teachers</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h3 className="text-xl font-bold mb-4">Add New Teacher</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input
+            type="text"
+            placeholder="Teacher Name"
+            value={teacherForm.name}
+            onChange={(e) => setTeacherForm({ ...teacherForm, name: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <input
+            type="text"
+            placeholder="Subject"
+            value={teacherForm.subject}
+            onChange={(e) => setTeacherForm({ ...teacherForm, subject: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <input
+            type="text"
+            placeholder="Class"
+            value={teacherForm.class}
+            onChange={(e) => setTeacherForm({ ...teacherForm, class: e.target.value })}
+            className="border rounded px-4 py-2"
+          />
+          <button onClick={addTeacher} className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
+            Add Teacher
+          </button>
+        </div>
+      </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-4">Teacher List</h3>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-3">Name</th>
+              <th className="text-left p-3">Subject</th>
+              <th className="text-left p-3">Class</th>
+              <th className="text-left p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teachers.map(teacher => (
+              <tr key={teacher.id} className="border-b hover:bg-gray-50">
+                <td className="p-3">{teacher.name}</td>
+                <td className="p-3">{teacher.subject}</td>
+                <td className="p-3">{teacher.class}</td>
+                <td className="p-3">
+                  <button
+                    onClick={() => deleteTeacher(teacher.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 mr-2"
+                  >
+                    Delete
+                  </button>
+                  <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // School Info Page
+  const SchoolInfoPage = () => (
+    <div>
+      <h2 className="text-3xl font-bold mb-6">School Information</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center space-x-3 mb-4">
+            <Clock className="text-blue-500" size={24} />
+            <h3 className="text-xl font-bold">School Timings</h3>
+          </div>
+          <input
+            type="text"
+            value={schoolInfo.timings}
+            onChange={(e) => setSchoolInfo({ ...schoolInfo, timings: e.target.value })}
+            className="border rounded px-4 py-2 w-full mb-4"
+          />
+          <button className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
+            Update Timings
+          </button>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center space-x-3 mb-4">
+            <Calendar className="text-green-500" size={24} />
+            <h3 className="text-xl font-bold">Add Event</h3>
+          </div>
+          <div className="flex space-x-2 mb-4">
+            <input
+              type="text"
+              placeholder="Enter event"
+              value={eventInput}
+              onChange={(e) => setEventInput(e.target.value)}
+              className="border rounded px-4 py-2 flex-1"
+            />
+            <button onClick={addEvent} className="bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700">
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold mb-4">Upcoming Events</h3>
+          <ul className="space-y-2">
+            {schoolInfo.events.map((event, idx) => (
+              <li key={idx} className="p-3 bg-gray-50 rounded flex justify-between items-center">
+                <span>{event}</span>
+                <button
+                  onClick={() => setSchoolInfo({
+                    ...schoolInfo,
+                    events: schoolInfo.events.filter((_, i) => i !== idx)
+                  })}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+           
